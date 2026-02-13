@@ -1,5 +1,7 @@
 package com.checkout.payment.gateway.controller;
 
+import com.checkout.payment.gateway.enums.PaymentStatus;
+import com.checkout.payment.gateway.model.PostPaymentRequest;
 import com.checkout.payment.gateway.model.PostPaymentResponse;
 import com.checkout.payment.gateway.service.PaymentGatewayService;
 import java.util.UUID;
@@ -7,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController("api")
@@ -21,5 +25,22 @@ public class PaymentGatewayController {
   @GetMapping("/payment/{id}")
   public ResponseEntity<PostPaymentResponse> getPostPaymentEventById(@PathVariable UUID id) {
     return new ResponseEntity<>(paymentGatewayService.getPaymentById(id), HttpStatus.OK);
+  }
+
+  @PostMapping("/payment")
+  public ResponseEntity<PostPaymentResponse> processPayment(
+      @RequestBody PostPaymentRequest paymentRequest) {
+    PostPaymentResponse response = paymentGatewayService.processPayment(paymentRequest);
+
+    HttpStatus httpStatus;
+    if (response.getStatus() == PaymentStatus.REJECTED) {
+      httpStatus = HttpStatus.BAD_REQUEST;
+    } else if (response.getStatus() == PaymentStatus.DECLINED) {
+      httpStatus = HttpStatus.OK;
+    } else {
+      httpStatus = HttpStatus.OK;
+    }
+
+    return new ResponseEntity<>(response, httpStatus);
   }
 }
